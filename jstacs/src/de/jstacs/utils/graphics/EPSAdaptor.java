@@ -18,7 +18,6 @@
 
 package de.jstacs.utils.graphics;
 
-
 import java.awt.Graphics2D;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -29,6 +28,7 @@ import org.apache.xmlgraphics.java2d.ps.EPSDocumentGraphics2D;
 
 /**
  * {@link GraphicsAdaptor} for the EPS format.
+ * 
  * @author Jan Grau
  *
  */
@@ -42,32 +42,32 @@ public class EPSAdaptor extends GraphicsAdaptor {
 	 * The stream for saving the results
 	 */
 	protected ByteArrayOutputStream stream;
-	
+
 	/**
 	 * Creates a new adaptor for plotting to an EPS device.
 	 */
-	public EPSAdaptor(){
-		graphics = new EPSDocumentGraphics2D( true );
+	public EPSAdaptor() {
+		graphics = new EPSDocumentGraphics2D(true);
 		graphics.setGraphicContext(new org.apache.xmlgraphics.java2d.GraphicContext());
-		
+
 	}
-	
+
 	@Override
-	public Graphics2D getGraphics( int width, int height ) throws IOException {
-		stream = new ByteArrayOutputStream();		
-		graphics.setupDocument( stream, width, height );
-		
+	public Graphics2D getGraphics(int width, int height) throws IOException {
+		stream = new ByteArrayOutputStream();
+		graphics.setupDocument(stream, width, height);
+
 		return graphics;
 	}
 
 	@Override
-	public void generateOutput( File file ) throws IOException {
-		
+	public void generateOutput(File file) throws IOException {
+
 		stream.flush();
 		stream.close();
-		
-		FileOutputStream out = new FileOutputStream( file );
-		out.write( stream.toByteArray() );
+
+		FileOutputStream out = new FileOutputStream(file);
+		out.write(stream.toByteArray());
 		graphics.finish();
 		out.close();
 	}
@@ -76,7 +76,5 @@ public class EPSAdaptor extends GraphicsAdaptor {
 	public String getGraphicsExtension() {
 		return "eps";
 	}
-	
-	
 
 }
