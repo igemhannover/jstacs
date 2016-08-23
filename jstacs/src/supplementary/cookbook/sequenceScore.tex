@@ -1,0 +1,367 @@
+\section{First main course: SequenceScores}\label{sequenceScore}
+
+\newcounter{tempcounter}
+\setcounter{tempcounter}{\arabic{off}}
+
+\SeqScore s define scoring functions over sequences that can assign a score to each input sequence. Such scores can then be used
+to classify sequences by chosing the class represented by that \SeqScore~yielding the maximum score.
+
+Sub-iterfaces of \SeqScore~are \DiffSS, which is tailored to numerical optimization, and \StatMod, which represents statistical models 
+defining a proper likelihood. \StatMod, in turn, has two sub-interfaces \TrainSM~and \DiffSM, where the latter joins the properties of \StatMod s and \DiffSS s. All of these will be explained in the sub-sections of this section.
+
+\renewcommand{\codefile}{../../de/jstacs/sequenceScores/SequenceScore.java}
+\setcounter{off}{49}
+
+\SeqScore~extends the standard interface \lstinline+Cloneable+ and, hence, implementations must provide a \lstinline+clone()+ method, which returns a deep copy of all fields of an instance:
+\code{0}
+Since the implementation of the clone method is very score-specific, it must be implemented anew for each implementation of the \SeqScore~interface. Besides that \SeqScore~also extends \Storable, which demands the implementation of the \lstinline+toXML()+ method and a constructor working on a \lstinline+StringBuffer+ containing an XML-representation (see section~\ref{sec:xmlparser}).
+
+\SeqScore~also defines some methods that are basically getters for typical properties of a \SeqScore~implementation. 
+These are
+\addtocounter{off}{7}
+\code{0}
+which returns the current \AlphabetContainer~of the model, i.e., the \AlphabetContainer~of \Sequence s this \SeqScore~can score,
+\addtocounter{off}{7}
+\code{0}
+which returns a - distinguishing - name of the current \SeqScore~instance, and
+\addtocounter{off}{10}
+\code{0}
+which returns the length of the \SeqScore, i.e. the possible length of input sequences. This length is defined to be zero, if the score can handle \Sequence s of variable length.
+
+The methods
+\addtocounter{off}{17}
+\code{0}
+and
+\addtocounter{off}{11}
+\code{0}
+can be used to return some properties of a \SeqScore~like the number of parameters, the depth of some tree structure, or whatever seems useful. In the latter case, these characteristics are limited to numerical values. If a model is used, e.g., in a cross validation (\KFoldCrossValidation), these numerical properties are averaged over all cross validation iterations and displayed together with the performance measures.
+
+The scoring of input \Sequence s is performed by three methods \lstinline+getLogScore+. The name of this method reflects that the returned score should be on a lagorithmic scale. For instance, for a stastical model with a proper likelihood over the sequences this score would correspond to the log-likelihood.
+The first method
+\addtocounter{off}{10}
+\code{0}
+returns the score for the given \Sequence. For reasons of efficiency, it is not intended to check if the length or
+the \AlphabetContainer~of the \Sequence~match those of the \SeqScore. Hence, no exception is declared for this method. So if
+this method is used (instead of the more stringent methods of \StatMod, see \ref{StatMod}) this should be checked externally.
+
+The second method is
+\addtocounter{off}{13}
+\code{0}
+which returns the score for the sub-sequence starting at position \lstinline+start+ end extending to the end of the \Sequence~or the end of the \SeqScore, whichever comes first.
+
+The third method is
+\addtocounter{off}{17}
+\code{0}
+and computes the score for the sub-sequence between \lstinline+start+ and \lstinline+end+, where the value at position \lstinline+end+ is the last value considered for the computation of the score.
+
+Two additional methods
+\addtocounter{off}{25}
+\code{0}
+and
+\addtocounter{off}{26}
+\code{0}
+allow for the computation of such scores for all \Sequence s in a \DataSet. The first method returns these scores, whereas the second stores the scores to the provided \lstinline+double+ array. This may be reasonable to save memory, for instance if we compute the log-likelihoods of a large number of sequences using different models.
+
+The result of this method (w.r.t. one \Sequence) should be identical
+to independent calls of \lstinline+getLogScore+. Hence, these method are pre-implemented exactly in this way in the abstract implementations
+of \SeqScore.
+
+Finally, the return value of the method
+\addtocounter{off}{9}
+\code{0}
+indicates if a \SeqScore~has been initialized, i.e., all parameters have been set to some (initial or learned) value and the \SeqScore~is
+ready to score \Sequence s.
+
+\subsection{DifferentiableSequenceScores}
+\renewcommand{\codefile}{../../de/jstacs/sequenceScores/differentiable/DifferentiableSequenceScore.java}
+\setcounter{off}{68}
+
+The interface \DiffSS~extends \SeqScore~ and adds all methods that are necessary for a numerical optimization of the parameters
+of a \SeqScore. This especially includes the computation of the gradient w.r.t. the parameters for a given input \Sequence.
+
+Before we can start a numerical optimization, we first need to specify initial parameters. \DiffSS~declares two 
+methods for that purpos. The first is
+\code{1}
+which is tailored to initializing the parameters from a given data set. The parameters have the following meaning: \lstinline+index+ is the index of the class this \DiffSS~ represents.
+For some parameterizations, we can either optimize (and initialize) only the free parameters of the model, i.e., excluding parameters with values that can be computed from the values of a subset of the remaining parameters, or we can optimize all parameters. For example such parameters could be those of a DNA dice, where the probability of one nucleotide is fixed if we know the probabilities of all other nucleotides.
+If \lstinline+freeParams+ is \lstinline+true+, only the free parameters are used.
+The array \lstinline+data+ holds the input data, where \lstinline+data[index]+ holds the data for the current class, and \lstinline+weights+ are the weights on each \Sequence~in \lstinline+data+.
+
+The second method for initialization is
+\addtocounter{off}{13}
+\code{0}
+which initializes all parameters randomly, where the exact method for drawing parameter values is implementation-specific.
+
+Like for the method \lstinline+getLogScore+ of \SeqScore, there are three methods for computing the gradient w.r.t. the parameters.
+The first is
+\addtocounter{off}{21}
+\code{0}
+where \lstinline+seq+ is the \Sequence~for which the gradient is to be computed, and \lstinline+indices+ and \lstinline+partialDer+ are lists that shall be filled with the indexes and values of the partial derivation, respectively. Assume that we implement a \DiffSS~$f$~with $N$ parameters and $d_i = \frac{\partial \log f}{\partial \lambda_i}$ is the partial derivation of the log-score w.r.t. the $i$-th parameter of $f$. Then we would add the index $i$ to \lstinline+indices+ and (before subsequent additions to \lstinline+indices+ or \lstinline+partialDer+) add $d_i$ to \lstinline+partialDer+. Partial derivations, i.e., components of the gradient, that are zero may be omitted.
+
+The other two methods
+\addtocounter{off}{24}
+\code{0}
+and
+\addtocounter{off}{28}
+\code{0}
+additionally allow for the specification of a start (and end) position within the \Sequence~\lstinline+seq+ in the same manner as specified for \lstinline+getLogScore+ of \SeqScore.
+
+The method
+\addtocounter{off}{11}
+\code{0}
+returns the number of parameters ($N$ in the example above) of parameters of this \DiffSS. It is used, for example, to create temporary arrays for the summation of gradients during numerical optimization.
+
+Since numerical optimization for non-convex problems may get stuck in local optima, we often need to restart numerical optimization multiple times from different initial values of the parameters. As the number of starts that is required to yield the global optimum with high probability is highly score-specific, \DiffSS~defines a method
+\addtocounter{off}{8}
+\code{0}
+that returns the number of starts that is recommended by the developer of this \DiffSS. If multiple \DiffSS~are used in a numerical optimization (for instance for the different classed), the maximum of these values is used in the optimization. If your parameterization is known to be convex, this method should return 1.
+
+The currently set parameters (either by initialization or explicitly, see below) can be obtained by
+\addtocounter{off}{16}
+\code{0}
+and new parameter values may be set by
+\addtocounter{off}{12}
+\code{0}
+where \lstinline+start+ is the index of the value for the first parameter of this \DiffSS~ within \lstinline+params+.
+
+Finally, the method
+\addtocounter{off}{12}
+\code{0}
+returns the class parameter for a given class probability. The default implementation in the abstract class \AbstractDiffSS~returns \lstinline+Math.log(classProb)+. This abstract class also provides standard implementations for many of the other methods.
+
+\subsection{StatisticalModels}\label{StatMod}
+\renewcommand{\codefile}{../../de/jstacs/sequenceScores/statisticalModels/StatisticalModel.java}
+\setcounter{off}{139}
+
+\StatMod s extend the specification of \SeqScore s by the computation of proper (normalized) likelihoods for input sequences.
+To this end, it defines three methods for computing the log-likelihood of a \Sequence~given a \StatMod~and its current parameter values.
+
+The first method just requires the specification of the \Sequence~object for which the log-likelihood is to be computed:
+\code{0}
+If the \StatMod~has not been trained prior to calling this method, it is allowed to throw an \lstinline+Exception+. The meaning of this method is slightly different for inhomogeneous, that is position-dependent, and homogeneous models. In case of an inhomogeneous model, for instance a position weight matrix, the specified \Sequence~must be of the same length as the model, i.e. the number of columns in the weight matrix. Otherwise an Exception should be thrown, since users may be tempted to misinterpret the return value as a probability of the complete, possibly longer or shorter, provided sequence.
+In case of models that can handle \Sequence s of varying lengths, for instance homogeneous Markov models, this method must return the likelihood of the complete sequence. Since this is not always the desired result, to other methods are specified, which allow for computing the likelihood of sub-sequences. This method should also check if the provided \Sequence~is defined over the same \AlphabetContainer~as the model.
+
+The second method is
+\addtocounter{off}{-28}
+\code{0}
+which computes the log-likelihood of the sub-sequence starting at position \lstinline+startpos+. The resulting value of the log-likelihood must be the same as if the user had called \lstinline+getLogProbFor(sequence.getSubSequence(startpos))+.
+
+The third method reads
+\addtocounter{off}{-38}
+\code{0}
+and computes the likelihood of the sub-sequence starting at position \lstinline+startpos+ up to position \lstinline+endpos+ (inclusive). The resulting value of the likelihood must be the same as if the user had called \lstinline!getProbFor(sequence.getSubSequence(startpos,endpos-startpos+1))!.
+
+If we want to use Bayesian principles for learning the parameters of a model, we need to specify a prior distribution on the parameter values. In some cases, for instance for using MAP estimation in an expectation maximization (EM) algorithm, it is not only necessary to estimate the parameters taking the prior into account, but also to know the value of the prior (or a term proportional to it). For this reason, the \StatMod~interface defines the method
+\addtocounter{off}{77}
+\code{0}
+which returns the logarithm of this prior term.
+
+If the concept of a prior is not applicable for a certain model or other reasons prevent you from implementing this method, \lstinline+getLogPriorTerm()+ should return \lstinline+Double.NEGATIVE_INFINITY+.
+
+\StatMod s can also be used to create new, artificial data according to the model assumptions. For this purpose, the \StatMod~interface specifies a method
+\addtocounter{off}{50}
+\code{1}
+which returns a \DataSet~of \lstinline+numberOfSequences+ \Sequence s drawn from the model using its current parameter values. The second parameter \lstinline+seqLength+ allows for the specification of the lenghts of the drawn \Sequence s. For inhomogeneous model, which inherently define the length of possible sequence, this parameter should be \lstinline+null+ or an array of length 0. For variable-length models, the lengths may either be specified for all drawn sequences by a single \lstinline+int+ value or by an array of length \lstinline+numberOfSequences+ specifying the length of each drawn sequence independently.
+
+The implementation of this method is not always possible. In its default implementation in the abstract implementations of \StatMod, this method just throws an Exception and must be explicitly overridden to be functional.
+
+The last method defined in \StatMod~ is
+\addtocounter{off}{11}
+\code{0}
+which returns the maximum number of preceeding positions that are considered for (conditional) probabilities.
+For instance, for a position weight matrix, this method should return 0, whereas for a homogeneous Markov model of order 2, it should return 2.
+
+\subsubsection{TrainableStatisticalModels}\label{tsm}
+
+Statistical models that can be learned on a single input data set are represented by the interface \TrainSM~of Jstacs. In most cases, such models are learned by generative learning principles like maximum likelihood (ML) or maximum a-posteriori (MAP). For models that are learned from multiple data sets, commonly by discriminative learning principles, Jstacs provides another interface \DiffSM, which will be presented in the next sub-section.
+
+In the following, we briefly describe all methods that are defined in the \TrainSM~interface. For convenience, an abstract implementation \AbstractTrainSM~of \TrainSM~exists, which provides standard implementations for many of these methods.
+
+\renewcommand{\codefile}{../../de/jstacs/sequenceScores/statisticalModels/trainable/TrainableStatisticalModel.java}
+\setcounter{off}{61}
+
+The parameters of statistical models are typically learned from some training data set. For this purpose, \TrainSM~specifies a method \lstinline+train+
+\code{0}
+that learns the parameters from the training data set \lstinline+data+. By specification, successive calls to \lstinline+train+ must result in a model trained on the data set provided in the last call, as opposed to incremental learning on all data sets.
+
+Besides this simple \lstinline+train+ method, \TrainSM~also declares another method
+\addtocounter{off}{27}
+\code{0}
+that allows for the specification of weights for each input sequence. Since the previous method is a special case of this one where all weights are equal to $1$, only the weighted variant must be implemented, if you decide to extend \AbstractTrainSM. This method should be implemented such that the specification of \lstinline+null+ weights leads to the standard variant with all weights equal to 1. The actual training method may be totally problem and implementation specific. However, in most cases you might want to use one of the generative learning principles ML or MAP.
+
+After a model has been trained it can be used to compute the likelihood of a sequence given the model and its (trained) parameters as defined in \StatMod.
+
+The method
+\addtocounter{off}{7}
+\code{0}
+should return some \lstinline+String+ representation of the current model. Typically, this representation should include the current parameter values in some suitable format.
+
+\renewcommand{\codefile}{\defaultcodefile}
+\setcounter{off}{\arabic{tempcounter}}
+
+Besides the possibility to implement new statistical models in Jstacs, many of them are already implemented and can readily be used.
+As a central facility for creating \TrainSM~instances of many standard models, Jstacs provides a \TrainSMFactory.
+
+Using the \TrainSMFactory, we can create a new position weight matrix (PWM) model by calling
+\addtocounter{off}{10}
+\code{0}
+where we need to specify the (discrete) alphabet, the length of the matrix ($10$), i.e. the number of positions modeled, and an equivalent sample size (ESS) for MAP estimation ($4.0$). For the concept of an equivalent sample size and the BDeu prior used for most models in Jstacs, we refer the reader to (Heckerman). If the ESS is set to $0.0$, the parameters are estimated by the ML instead of the MAP principle.
+
+The factory method for an inhomogeneous Markov model of arbitrary order -- the PWM model is just an inhomogeneous Markov model of order 0 -- is
+\addtocounter{off}{1}
+\code{0}
+where the parameters are in complete analogy to the PWM model, expect the last one specifying the order of the inhomogeneous Markov model, which is 2 in the example.
+
+We can also create permuted Markov models of order $1$ and $2$, where the positions of the sequences may be permuted before building an inhomogeneous Markov model. The permutation is chosen such that the mutual information between adjacent positions is maximized. We create a permuted Markov model of length 7 and order 1 by calling
+\addtocounter{off}{1}
+\code{0}
+
+Homogeneous Markov models are created by
+\addtocounter{off}{1}
+\code{0}
+where the first parameter again specifies the alphabet, the second parameter is the equivalent sample size, and the third parameter is the order of the Markov model.
+
+We can create a ZOOPS model with a PWM as motif model and the homogeneous Markov model created above as flanking model using
+\addtocounter{off}{1}
+\code{0}
+where the third parameter contains the hyper-parameters for the two components of the ZOOPS model, and the last boolean allows two switch training of the flanking model on or off. In the example, we choose to train the flanking model and the motif model.
+
+After we created a \TrainSM, we can train it on input data. For instance, we train the PWM created above on a training \DataSet~\lstinline+ds+ by calling:
+\addtocounter{off}{3}
+\code{0}
+
+Instead of using the \TrainSMFactory, we can also create \TrainSM s directly using their constructors. For example, we create a homogeneous Markov model of order $0$ by calling
+\addtocounter{off}{3}
+\code{0}
+or we create a Bayesian network of (full) order $1$, i.e., a Bayesian tree, of length $8$ learned by MAP with an equivalent sample size of $4.0$ with
+\addtocounter{off}{3}
+\code{0}
+
+Due to the complexity of hidden Markov models, these have their own factory class called \HMMFactory.
+To create a new hidden Markov model, we first need to define the parameters of the training procedure, which is Baum-Welch training in the example
+\addtocounter{off}{3}
+\code{0}
+The parameters provided to that \ParameterSet~are the number of restarts of the training, the termination condition for each training, and the number of threads used for the (multi-threaded) optimization.
+
+Then we create the emissions of the HMM. Here, we choose two discrete emissions over the \DNAAlphabet:
+\addtocounter{off}{1}
+\code{0}
+For the first emission, we use a BDeu prior with equivalent sample size $4$, whereas for the second emission, we explictly specify the hyper-parameters of the BDe prior.
+
+Finally, we use the \HMMFactory~to create a new ergodic, i.e., fully connected, HMM for this training procedure and these emissions:
+\addtocounter{off}{1}
+\code{0}
+
+For non-standard architectures of the HMM, we can also use a constructor of \HigherOrderHMM, although we only use order $1$ in the example,
+\addtocounter{off}{3}
+\code{4}
+The arguments are: the training parameters, the names of the (two) states, the emissions as specified above, and \TransitionElement s that specify the transitions allowed in the HMM. In the example, we may start in the $0$-th state (A) represented by the first \TransitionElement, from that state we may either loop in state $0$ or proceeed to state $1$, and from state $1$ we may only go back to state $0$. For all transitions, we specify hyper-parameters for the corresponding Dirichlet prior.
+
+Once an HMM is created, we can use a method \lstinline+getGraphvizRepresentation+ to obtain the content of a .dot file with a graphical representation (nodes and edges) of the HMM:
+\addtocounter{off}{6}
+\code{0}
+
+Another important type of \TrainSM s within Jstacs are mixture models. Such mixture models can be mixtures of any sub-class of \TrainSM and can be learned either by expectation-maximization (EM) or by Gibbs sampling.
+
+We create a mixture model of two PWMs learned by expectation maximization using the constructor
+\addtocounter{off}{3}
+\code{0}
+where the first argument is the length of the model, the second are the \TrainSM s used as mixture components, the third is the number of restarts of the EM, the fourth are the hyper-parameters for the prior on the component probabilities, i.e., mixture weights, the fifth is the termination condition, and the last is the parameterization. For mixture models we can choose between the parameterization in terms of probabilities (called \lstinline+THETA+) and the so called ``natural parameterization'' as log-probabilities (called \lstinline+LAMBDA+).
+
+If we want to use Gibbs sampling instead of EM, we use the constructor
+\addtocounter{off}{3}
+\code{0}
+where the first 4 arguments remain unchanged, the fifth is the number of intial steps in the stationary phase, the sixth is the total number of stationary samplings, and the seventh is a burn-in test for determining the end of the burn-in phase and the start of the stationary phase. 
+
+A special case of a mixture model is the \StrandTrainSM, which is a mixture over the two strands of DNA. For both strands, the same component \TrainSM~is used but it is evaluated once for the original \Sequence~and once for its reverse complement.
+We construct a \StrandTrainSM~of the inhomogeneous Markov model created by the \TrainSMFactory~by calling
+\addtocounter{off}{3}
+\code{0}
+where the first argument is the component \TrainSM, the second is the number of starts, the third is the probability of the forward strand (which is fixed in the example but can also be learned), the fourth is the hyper-parameter for drawing initial strands ($1$ results in a uniform distribution on the simplex), the fifth is the termination condition, and the last is the parameterization (as above).
+
+
+\subsubsection{DifferentiableStatisticalModels}\label{dsm}
+\setcounter{tempcounter}{\arabic{off}}
+
+\renewcommand{\codefile}{../../de/jstacs/sequenceScores/statisticalModels/differentiable/DifferentiableStatisticalModel.java}
+\setcounter{off}{53}
+
+\DiffSM s are \StatMod s that also inherit the properties of \DiffSS s. That means, \DiffSM s define a proper likelihood over the input sequences and at the same time can compute partial derivations w.r.t. their parameters.
+
+This also means that they can compute a - not necessarily normalized - log-score using the \lstinline+getLogScore+ methods and normalized log-likelihoods using the \lstinline+getLogProb+ methods. In many cases it is more efficient to use the \lstinline+getLogScore+ methods and, in addition, to compute the normalization constant to obtain proper probabilities seperately. Hence,
+\DiffSM~defines a method
+\code{0}
+that returns the logarithm of that normalization constant, which only depends on the current parameter values but not on the input sequence. For computing the gradients with respect to the parameters, we also need the partial derivations of the log-normalization constant with respect to the parameters. To this end \DiffSM~ provides a method
+\addtocounter{off}{19}
+\code{0}
+that takes the (internal) index of the parameter for which the partial derivation shall be computed as the only argument.
+
+A similar schema is used for the prior on the parameters. In addition to the method \lstinline+getLogPriorTerm+ of \StatMod, the method
+\addtocounter{off}{36}
+\code{0}
+adds the values of the gradient of the log-prior with respect to all parameters to the given array \lstinline+grad+ starting at position \lstinline+start+.
+
+The method
+\addtocounter{off}{10}
+\code{0}
+returns \lstinline+true+ if the \DiffSM~is already normalized, that means if \lstinline+getLogScore+ already returns proper probabilities. If that is the case, \lstinline+getLogNormalizationConstant+ must always return $0$, and \lstinline+getLogPartialNormalizationConstant+ must return \lstinline+Double.NEGATIVE_INFINITY+ for all parameters.
+
+Finally,
+\addtocounter{off}{9}
+\code{0}
+returns the equivalent sample size used for the prior of this \DiffSM.
+
+\renewcommand{\codefile}{\defaultcodefile}
+\setcounter{off}{\arabic{tempcounter}}
+
+The \DiffSM~implementations of standard models already exist in Jstacs.
+For example, we can create a Bayesian network of length $10$ with the network structure learned by means of the discriminative ``explaining away residual'' with
+\addtocounter{off}{15}
+\code{0}
+where the parameters of the \ParameterSet~are the \AlphabetContainer, the length and the equivalent sample size of the \DiffSM, a switch wether (generative) plug-in parameters shall be used and an object for the structure measure.
+
+An inhomogeneous Markov model of order $1$, length $8$, and with equivalent sample size $4.0$ is created by
+\addtocounter{off}{3}
+\code{0}
+
+\DiffSM s are mainly used for discriminative parameter learning in Jstacs. To discriminatively learn the parameters of two inhomogeneous Markov models as created above, we need the following three lines.
+\addtocounter{off}{3}
+\code{2}
+The discriminative learning principle used in the example is maximum supervised posterior (MSP). For details about the \GenDisMixClassifier~used in the example, see section~\ref{GenDisMixClassifier}
+
+A homogeneous Markov models of order $3$ with equivalent sample size $4.0$ is created by the constructor
+\addtocounter{off}{6}
+\code{0}
+The last argument of this constructor is the expected length of the input sequences. This length is used to compute consistent hyper-parameters from the equivalent sample size for this class, since the (transition) parameters of a homogeneous Markov model are used for more than one position of an input sequence.
+
+Similar to hidden Markov models that are \TrainSM s, we can create a \DiffSM~hidden Markov model with the following lines:
+\addtocounter{off}{3}
+\code{5}
+The emissions and transitions of the hidden Markov model are the same as in the \TrainSM~case. However, we use training parameters for numerical optimization in this example.
+
+A mixture \DiffSM~of two inhomogeneous Markov models can be created by
+\addtocounter{off}{8}
+\code{0}
+where the first argument is the recommended number of restarts, and the second argument indicates if plug-in parameters shall be used.
+
+Similar to \TrainSM s, we can also define a mixture over the DNA strands with
+\addtocounter{off}{4}
+\code{0}
+where the first argument is the component \DiffSM, the second is the a-priori probability of the forward strand, the third is the recommended number of restarts, the fourth, again, indicates if plug-in parameters are used, and the fifth indicates on which strands the component \DiffSM~is initialized.
+
+We can use this \StrandDiffSM~together with a homogeneous Markov model as the flanking model to specify a ZOOPS \DiffSM~using the constructor
+\addtocounter{off}{3}
+\code{0}
+Here, the first argument specifies that we want to use ZOOPS (as opposed to OOPS, where each sequence contains a motif occurrence), the second is the lenght of the input sequences, the third is the number of restarts, the fourth switches plug-in parameters, the fifth and sixth are the flanking and motif model, respectively, the seventh specifies a position distribution for the motifs (where \lstinline+null+ defaults to a uniform distribution), and the last indicates if the flanking model is initialized (again).
+
+Sometimes it is useful to model different parts of a sequence by different \DiffSM s, for instance if we have some structural knowledge about the input sequences. To this end, Jstacs provides a class \IndependentProductDiffSM, for which we can specify the models of different parts independently. We create such a \IndependentProductDiffSM~by calling
+\addtocounter{off}{4}
+\code{0}
+where the first parameter is the equivalent sample size, the second switches plug-in parameters, and the remaining are the \DiffSM s to be combined. Besides this constructor, other constructors allow for specifying the lengths of the parts of a sequence to be modeled by the different \DiffSM s or the re-use of the same \DiffSM~for different, possibly remote, parts of an input sequence.
+
+Since \DiffSM s provide methods for computing log-likelihoods, for computing normalization constants, and for determining the gradient with respect to their parameters, they can also be learned generatively by numerical optimization. For this purpose, a wrapper class exists that creates a \TrainSM~out of any \DiffSM. We create such a wrapper object with
+\addtocounter{off}{4}
+\code{1}
+where we need to specify the \DiffSM~that shall be learned and the parameters of the numerical optimization (see section~\ref{Optimization} for details). By this means, we can use any \DiffSM~in the world of \TrainSM s as well, for instance to build a \TrainSMBasedClassifier (see next section).
+
+

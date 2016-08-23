@@ -1,0 +1,137 @@
+\section{Recipes}\label{recipes}
+
+\lstset{language=Java,basicstyle=\footnotesize\ttfamily,
+keywordstyle=\color{lstblue},
+commentstyle=\color{lstgreen}\ttfamily,
+tabsize=2,
+breaklines=true,
+breakatwhitespace=true}
+
+In this section, we show some more complex code examples. All these code examples can be downloaded \href{http://www.jstacs.de/downloads/recipes.zip}{as a zip file} and may serve as a starting points for your own applications.
+
+\subsection{Creation of user-specfic alphabet}
+In this example, we create a new \ComplementableDiscreteAlphabet~using the generic implementation. We then use this \Alphabet~to create a \Sequence~and compute its reverse complement.
+\renewcommand{\codefile}{./recipes/AlphabetCreation.java}
+\setcounter{off}{33}
+\code{16}
+
+\subsection{Learning a position weight matrix from data}
+In this example, we show how to load sequence data into Jstacs and how to learn a position weight matrix (inhomogeneous Markov model of order 0) on these data.
+\renewcommand{\codefile}{./recipes/TrainPWM.java}
+\setcounter{off}{36}
+\code{9}
+
+\subsection{Learning a homogeneous Markov model from data}
+In this example, we show how to load sequence data into Jstacs and how to learn a homogeneous Markov model of order 1 on these data.
+\renewcommand{\codefile}{./recipes/TrainHomogeneousMM.java}
+\setcounter{off}{35}
+\code{7}
+
+\subsection{Generating data from a homogeneous Markov model}
+In this example, we show how to learn a homogeneous Markov model of order 2 from data (similar to the previous example), and use the learned model to generate new data following the same distribution as the original data.
+\renewcommand{\codefile}{./recipes/GenerateData.java}
+\setcounter{off}{39}
+\code{12}
+
+\subsection{Learning a mixture model from data}
+In this example, we show how to load sequence data into Jstacs and how to learn a mixture model of two position weight matrices on these data using the expectation maximization algorithm.
+\renewcommand{\codefile}{./recipes/CreateMixtureModel.java}
+\setcounter{off}{35}
+\code{10}
+
+\subsection{Analysing data with different models}
+In this example, we show how to use the \TrainSMFactory~to create inhomogeneous and homogeneous Markov models, and Bayesian trees, and how to learn these models on a common data set.
+\renewcommand{\codefile}{./recipes/AnalyseDataWithDifferentModels.java}
+\setcounter{off}{35}
+\code{23}
+
+\subsection{De-novo motif discovery with a sunflower hidden Markov model)}
+In this example, we show how to use the \HMMFactory~to create a sunflower hidden Markov model (HMM) with two motifs of different lengths. We show how to train the sunflower HMM on input data, which are typically long sequences containing an over-represented motif. After training the HMM, we show how to compute and output the Viterbi paths for all sequences, which give an indication of the position of motif occurrences.
+\renewcommand{\codefile}{./recipes/DeNovoSunflower.java}
+\setcounter{off}{40}
+\code{14}
+
+\subsection{Learning a classifier using the generative maximum a-posteriori principle}
+In this example, we show how to train a classifier based on a position weight matrix model and a homogeneous Markov model on training data, and how to use the trained classifier to classify sequences.
+\renewcommand{\codefile}{./recipes/TrainClassifier.java}
+\setcounter{off}{40}
+\code{24}
+
+\subsection{Learning a classifier using the discriminative maximum supervised posterior principle}
+In this example, we show how to use the \DiffSMFactory~to create a position weight matrix and how to learn a classifier based on two position weight matrices using the discriminative maximum supervised posterior principle.
+\renewcommand{\codefile}{./recipes/CreateMSPClassifier.java}
+\setcounter{off}{42}
+\code{14}
+
+\subsection{Creating Data sets}
+In this example, we show different ways of creating a \DataSet~in Jstacs from plain text and FastA files and using the adaptor to BioJava.
+\renewcommand{\codefile}{./recipes/DataLoader.java}
+\setcounter{off}{47}
+\code{29}
+
+\subsection{Using TrainSMBasedClassifier}
+In this example, we show how to create a \TrainSMBasedClassifier~using to position weight matrices, train this classifier, classify previously unlabeled data, store the classifier to its XML representation, and load it back into Jstacs.
+\renewcommand{\codefile}{./recipes/TrainSMBasedClassifierTest.java}
+\setcounter{off}{53}
+\code{46}
+
+\subsection{Using GenDisMixClassifier}
+In this example, we show how to create \GenDisMixClassifier s using two position weight matrices. We show how \GenDisMixClassifier s can be created for all basic learning principles (ML, MAP, MCL, MSP), and how these classifiers can be trained and assessed.
+\renewcommand{\codefile}{./recipes/GenDisMixClassifierTest.java}
+\setcounter{off}{54}
+\code{51}
+
+\subsection{Accessing R from Jstacs}
+Here, we show a number of examples how R can be used from within Jstacs using RServe.
+\renewcommand{\codefile}{./recipes/RserveTest.java}
+\setcounter{off}{40}
+\code{38}
+
+\subsection{Getting ROC and PR curve from a classifier}
+In this example, we show how a classifier (loaded from disk) can be assessed on test data, and how we can plot ROC and PR curves of this classifier and test data set.
+\renewcommand{\codefile}{./recipes/CurvePlotter.java}
+\setcounter{off}{53}
+\code{39}
+
+\subsection{Performing crossvalidation}
+In this example, we show how we can compare classifiers built on different types of models and using different learning principles in a cross validation. Specifically, we create a position weight matrix, use that matrix to create a mixture model, and we create an inhomogeneous Markov model of order $3$. We do so in the world of \TrainSM s and in the world of \DiffSM s. We then use the mixture model as foreground model and the inhomogeneous Markov model as the background model when building classifiers. The classifiers are learned by the generative MAP principle and the discriminative MSP principle, respectively. 
+We then assess these classifiers in a $10$-fold cross validation.
+\renewcommand{\codefile}{./recipes/Crossvalidation.java}
+\setcounter{off}{62}
+\code{92}
+
+\subsection{Implementing a TrainableStatisticalModel}
+In this example, we show how to implement a new \TrainSM. Here, we implement a simple homogeneous Markov models of order $0$ to focus on the technical side of the implementation. A homogeneous Markov model of order $0$ has parameters $\theta_a$ where $a$ is a symbol of the alphabet $\Sigma$ and $\sum_{a \in \Sigma} \theta_a = 1$. For an input sequence $\mathbf{x} = x_1,\ldots,x_L$ it models the likelihood
+\begin{align*}
+P(\mathbf{x}|\boldsymbol{\theta}) &= \prod_{l=1}^{L} \theta_{x_l}.
+\end{align*}
+In the implementation, we use log-parameters $\log \theta_a$.
+\renewcommand{\codefile}{recipes/HomogeneousMarkovModel.java}
+\setcounter{off}{35}
+\code{93}
+
+\subsection{Implementing a DifferentiableStatisticalModel}
+In this example, we show how to implement a new \DiffSM. Here, we implement a simple position weight matrix, i.e., an inhomogeneous Markov model of order $0$. Since we want to use this position weight matrix in numerical optimization, we parameterize it in the so called ``natural parameterization'', where the probability of symbol $a$ at position $l$ is $P(X_l=a | \boldsymbol{\lambda}) = \frac{\exp(\lambda_{l,a})}{ \sum_{\tilde{a}} \exp(\lambda_{l,\tilde{a}}) }$. Since we use a product-Dirichlet prior on the parameters, we transformed this prior to the parameterization we use.
+
+Here, the method \lstinline+getLogScore+ returns a log-score that can be normalized to a proper log-likelihood by subtracting a log-normalization constant.
+The log-score for an input sequence $\mathbf{x} = x_1,\ldots,x_L$ essentially is
+\begin{align*}
+S(\mathbf{x}|\boldsymbol{\lambda}) &= \sum_{l=1}^{L} \lambda_{l,x_l}.
+\end{align*}
+The normalization constant is a partition function, i.e., the sum of the scores over all possible input sequences:
+\begin{align*}
+Z(\boldsymbol{\lambda}) &= \sum_{\mathbf{x} \in \Sigma^L} \exp( S(\mathbf{x}|\boldsymbol{\lambda}) )\\
+&= \sum_{\mathbf{x} \in \Sigma^L} \prod_{l=1}^{L} \exp(\lambda_{l,x_l})\\
+&= \prod_{l=1}^{L} \sum_{a \in \Sigma} \exp(\lambda_{l,a})
+\end{align*}
+Thus, the likelihood is defined as
+\begin{align*}
+P(\mathbf{x}|\lambda) &= \frac{\exp(S(\mathbf{x}|\boldsymbol{\lambda}))}{Z(\boldsymbol{\lambda})}
+\end{align*}
+and
+\begin{align*}
+\log P(\mathbf{x}|\lambda) &= S(\mathbf{x}|\boldsymbol{\lambda})) - \log Z(\boldsymbol{\lambda}).
+\end{align*}
+\renewcommand{\codefile}{recipes/PositionWeightMatrixDiffSM.java}
+\setcounter{off}{34}
+\code{238}

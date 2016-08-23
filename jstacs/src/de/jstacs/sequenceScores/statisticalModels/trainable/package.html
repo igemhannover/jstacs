@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+/*
+ * This file is part of Jstacs.
+ *
+ * Jstacs is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * Jstacs is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Jstacs.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * For more information on Jstacs, visit http://www.jstacs.de
+ */
+-->
+</head>
+<body bgcolor="white">
+
+Provides all {@link de.jstacs.sequenceScores.statisticalModels.trainable.TrainableStatisticalModel}s, which can
+be learned from a single {@link de.jstacs.data.DataSet}. Often, parameter learning follows a learning principle
+like maximum likelihood or maximum a-posteriori. Parameter learning typically is performed analytically like for the homogeneous and inhomogeneous
+models in the {@link de.jstacs.sequenceScores.statisticalModels.trainable.discrete} sub-package.<br />
+
+Notable exceptions are hidden Markov models ({@link de.jstacs.sequenceScores.statisticalModels.trainable.hmm}), which are learned by Baum-Welch or Viterbi training, 
+and mixture models ({@link de.jstacs.sequenceScores.statisticalModels.trainable.mixture}), which are learned by expectation-maximization (EM) or
+Gibbs sampling.<br />
+
+After a {@link de.jstacs.sequenceScores.statisticalModels.trainable.TrainableStatisticalModel} has been trained, it can be used
+to compute the likelihood of new sequences.<br />
+
+Any combination of {@link de.jstacs.sequenceScores.statisticalModels.trainable.TrainableStatisticalModel}s can be used to build a
+{@link de.jstacs.classifiers.trainSMBased.TrainSMBasedClassifier}, which can be used to classify new sequences and which can
+be evaluated using a {@link de.jstacs.classifiers.assessment.ClassifierAssessment}.<br />
+<!-- Put @see and @since tags down here. -->
+</body>
+</html>

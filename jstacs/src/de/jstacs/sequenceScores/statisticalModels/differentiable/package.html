@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html>
+<head>
+<!--
+/*
+ * This file is part of Jstacs.
+ *
+ * Jstacs is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * Jstacs is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Jstacs.  If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * For more information on Jstacs, visit http://www.jstacs.de
+ */
+-->
+</head>
+<body bgcolor="white">
+
+Provides all {@link de.jstacs.sequenceScores.statisticalModels.differentiable.DifferentiableStatisticalModel}s, which can compute the gradient with
+respect to their parameters for a given input {@link de.jstacs.data.sequences.Sequence}.
+The parameters of {@link de.jstacs.sequenceScores.statisticalModels.differentiable.DifferentiableStatisticalModel} are learned numerically, typically by 
+gradient-based method like provided in {@link de.jstacs.algorithms.optimization.Optimizer}.<br />
+
+This is especially used in Jstacs for learning the parameters by discriminative learning principles like maximum conditional likelihood or
+maximum supervised posterior (see {@link de.jstacs.classifiers.differentiableSequenceScoreBased.msp.MSPClassifier}) or by a unified learning principle (see
+{@link de.jstacs.classifiers.differentiableSequenceScoreBased.gendismix.GenDisMixClassifier}).<br />
+
+The sub-package {@link de.jstacs.sequenceScores.statisticalModels.differentiable.directedGraphicalModels} contains Bayesian networks and inhomogeneous Markov models.<br />
+The sub-package {@link de.jstacs.sequenceScores.statisticalModels.differentiable.homogeneous} provides homogeneous models like homogeneous Markov models.<br />
+The sub-package {@link de.jstacs.sequenceScores.statisticalModels.differentiable.mixture} provides mixture models including an extended ZOOPS model
+for de-novo motif discovery.<br />
+
+Some of the provided {@link de.jstacs.sequenceScores.statisticalModels.differentiable.DifferentiableStatisticalModel}s also implement the interface
+{@link de.jstacs.sequenceScores.statisticalModels.differentiable.SamplingDifferentiableStatisticalModel} and can be used for
+Metropolis-Hastings parameter sampling in a {@link de.jstacs.classifiers.differentiableSequenceScoreBased.sampling.SamplingGenDisMixClassifier}.
+
+<!-- Put @see and @since tags down here. -->
+
+
+</body>
+</html>

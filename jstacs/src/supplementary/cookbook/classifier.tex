@@ -1,0 +1,162 @@
+\section{Second main course: Classifiers}\label{classifier}
+
+\renewcommand{\codefile}{../../de/jstacs/classifiers/AbstractClassifier.java}
+\setcounter{off}{463}
+
+Classifiers allow to classify, i.e., label, previously uncharacterized data. In Jstacs, we provide the abstract class \AbstractClassifier~that declares three important methods besides several others. 
+
+The first method trains a classifier, i.e., it somehow adjusts to the train data:
+  \code{0}
+
+The second method classifies a given \Sequence:
+  
+  \addtocounter{off}{-313}
+  \code{0}
+
+\renewcommand{\codefile}{\defaultcodefile}
+\setcounter{off}{575}
+If we like to classify for instance the first sequence of a data set, we might use
+\code{0}
+In addition to this method, another method \lstinline+classify(DataSet)+ exists that performs a classification for all \Sequence s in a \DataSet.
+
+\renewcommand{\codefile}{../../de/jstacs/classifiers/AbstractClassifier.java}
+\setcounter{off}{213}
+The third method allows for assessing the performance. Typically this is done on test data
+  \code{0}
+  
+  where \lstinline+params+ is a \ParameterSet~of performance measures (cf. subsection~\ref{Performance}), \lstinline+exceptionIfNotComputeable+ indicates if an exception should be thrown if a performance measure could not be computed, and \lstinline+s+ is an array of data sets, where dimension \lstinline+i+ contains data of class \lstinline+i+.
+
+The abstract sub-class \AbstractScoreBasedClassifier~of \AbstractClassifier~adds an additional method for computing a joint score for an input \Sequence~ and a given class:
+\renewcommand{\codefile}{../../de/jstacs/classifiers/AbstractScoreBasedClassifier.java}
+\setcounter{off}{287}
+ \code{0}
+similar to the \lstinline+classify+ method. For two-class problems, the method
+\setcounter{off}{573}
+ \code{0}
+allows for computing the score-differences given foreground and background class for all \Sequence s in the \DataSet~\lstinline+s+. Such scores are typically the sum of the a-priori class log-score or log-probability and the score returned by \lstinline+getLogScore+ of \SeqScore~ or \lstinline+getLogProb+ of \StatMod.
+
+Sometimes data is not split into test and train data for several diverse reasons, as for instance limited amount of data. In such cases, it is recommended to utilize some repeated procedure to split the data, train on one part and classify on the other part. In Jstacs, we provide the abstract class \ClassifierAssessment~that allows to implement such procedures. In subsection~\ref{Assessment}, we describe how to use \ClassifierAssessment~and its extension.
+
+But at first, we will focus on classifiers.\footnote{An easy way to create classifiers is the \ClassifierFactory.} Any classifier in Jstacs is an extension of the \AbstractClassifier. In this section, we present on two concrete implementations, namely \TrainSMBasedClassifier~(cf. subsection~\ref{TrainSMBasedClassifier}) and \GenDisMixClassifier~(cf. subsection~\ref{GenDisMixClassifier}). 
+
+\subsection{TrainSMBasedClassifier}\label{TrainSMBasedClassifier}
+
+The class \TrainSMBasedClassifier~implements a classifier on \TrainSM s, i.e., for each class the classifier holds a \TrainSM.
+ 
+If we like to build a binary classifier using PWMs for each class, we first create a PWM that is a \TrainSM.
+
+\renewcommand{\codefile}{\defaultcodefile}
+\setcounter{off}{548}
+\code{0}
+
+Then we can use this instance to create the classifier using 
+
+\addtocounter{off}{3}
+\code{0}
+
+Thereby, we do not need to clone the PWM instance, as this is done internally for safety reasons. If we like to build a classifier that allows to distinguish between $N$ classes, we use the same constructor but provide $N$ \TrainSM s.
+
+If we train a \TrainSMBasedClassifier, the train method of the internally used \TrainSM s is called. For classifying a sequence, the \TrainSMBasedClassifier calls \lstinline+getLogProbFor+ of the internally used \TrainSM s and incorporates some class weight.
+
+\subsection{GenDisMixClassifier}\label{GenDisMixClassifier}
+
+The class \GenDisMixClassifier~implements a classifier using the unified generative-discriminative learning principle to train the internally used \DiffSM s. In analogy to the \TrainSMBasedClassifier, the \GenDisMixClassifier~holds for each class a \DiffSM.
+
+If we like to build a \GenDisMixClassifier, we have to provide the parameters for this classifier:
+
+\addtocounter{off}{3}
+\code{0}
+
+This line of code generate a \ParameterSet~for a \GenDisMixClassifier. It states 
+the used \AlphabetContainer,
+the sequence length,
+an indicator for the numerical algorithm that is used during training,
+an epsilon for stopping the numerical optimization,
+a line epsilon for stopping the line search within the numerical optimization,
+a start distance for the line search,
+a switch that indicates whether the free or all parameter should be used,
+an enum that indicates the kind of class parameter initialization,
+a switch that indicates whether normalization should be used during optimization,
+and the number of threads used during numerical optimization.
+
+If we like to build a binary classifier using PWMs for each class, we create a PWM that is a \DiffSM.
+
+\addtocounter{off}{3}
+\code{0}
+
+Now, we are able to build a \GenDisMixClassifier~that uses the maximum likelihood learning principle.
+
+\addtocounter{off}{3}
+\code{0}
+
+In close analogy, we can build a \GenDisMixClassifier~that uses the maximum conditional likelihood learning principle, if we use \lstinline+LearningPrinciple.MCL+.
+
+However, if we like to use a Bayesian learning principle we have to specify a prior that represents our prior knowledge. One of the most popular priors is the product Dirichlet prior. We can create an instance of this prior using
+
+\addtocounter{off}{3}
+\code{0}
+
+This class utilizes methods of \DiffSM~(cf. \lstinline+getLogPriorTerm()+ and \lstinline+addGradientOfLogPriorTerm(double[], int)+) to provide the correct prior.
+
+Given a prior, we can build a \GenDisMixClassifier~using for instance the maximum supervised learning principle:
+
+\addtocounter{off}{3}
+\code{0}
+
+Again in close analogy, we can build a \GenDisMixClassifier~that uses the maximum a-posteriori learning principle, if we use \lstinline+LearningPrinciple.MAP+.
+ 
+Alternative, we can build a \GenDisMixClassifier~that utilize the unified generative-discriminative learning principle. If we like to do so, we have to provide a weighting that sums to 1 and represents the weights for the conditional likelihood, the likelihood and the prior.
+
+\addtocounter{off}{3}
+\code{0}
+
+\subsection{Performance measures}\label{Performance}
+
+If we like to assess the performance of any classifier, we have to use the method \lstinline+evaluate+ (see beginning of this section). The first argument of this method is a \PerformanceMeasureParameterSet~that hold the performance measures to be computed. The most simple way to create an instance is
+
+\addtocounter{off}{9}
+\code{0}
+
+which yields an instance with all standard performance measures of Jstacs and specified parameters. The first argument states that all performance measures should be included. If we would change the argument to \lstinline+true+, only numerical performance measures would be included an the returned instance would be a \NumericalPerformanceMeasureParameterSet. The other four arguments are parameters for some performance measures.
+
+Another way of creating a \PerformanceMeasureParameterSet~is to directly use performance measures extending the class \AbstractPerformanceMeasure. For instance if we like to use the area under the curve (auc) for ROC and PR curve, we create 
+
+\addtocounter{off}{1}
+\code{0}
+
+Based on this array, we can create a \PerformanceMeasureParameterSet~that only contains these performance measures.
+
+\addtocounter{off}{1}
+\code{0}
+
+\subsection{Assessment}\label{Assessment}
+
+If we like to assess the performance of any classifier based on an array of data sets that is not split into test and train data, we have to use some repeated procedure. In Jstacs, we provide the \ClassifierAssessment~that is the abstract super class of any such an procedure. We have already implemented the most widely used procedures (cf. \KFoldCrossValidation~and \RepeatedHoldOutExperiment).
+
+Before performing a \ClassifierAssessment, we have to define a set of numerical performance measures. The performance measure have to be numerical to allow for an averaging. The most simple way to create such a set is
+\addtocounter{off}{6}
+\code{0}
+However, you can choose other measures as described in the previous subsection.
+
+In this subsection, we exemplarily present how to perform a k-fold cross validation in Jstacs. First, we have to create an instance of \KFoldCrossValidation. There several constructor to do so. Here, we use the constructor that used \AbstractClassifier s. 
+
+\addtocounter{off}{2}
+\code{0}
+
+Second, we have to specify the parameters of the \KFoldCrossValidation.
+
+\stepcounter{off}
+\code{0}
+
+These parameter are
+the partition method, i.e., the way how to count entries during a partitioning,
+the sequence length for the test data,
+a switch indicating whether an exception should be thrown if a performance measure could not be computed (cf. \lstinline+evaluate+ in \AbstractClassifier),
+and the number of repeats $k$.
+
+Now, we are able to perform a \ClassifierAssessment~just by calling the method \lstinline+assess+.
+
+\stepcounter{off}
+\code{0}
+
+We print the result (cf. \ListResult) of this assessment to standard out. If we like to perform other \ClassifierAssessment s, as for instance, a \RepeatedHoldOutExperiment, we have to use a specific \ParameterSet~ (cf. \KFoldCrossValidation~and \KFoldCrossValidationAssessParameterSet).
